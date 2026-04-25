@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="IGS Fees"/>
+<title>Imukuro Grammar School — Portal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+#app{max-width:430px;margin:0 auto;min-height:100dvh;background:#fff;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,0.08);}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;padding:48px 24px 32px;display:none;flex-direction:column;background:#fff;overflow-y:auto;}
+.screen.active{display:flex;}
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:26px;}
+.back-btn{background:none;border:1px solid #ddd;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;color:#666;}
+.screen-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.07em;}
+.school-logo{width:52px;height:52px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.settings-btn{position:absolute;top:48px;right:24px;background:none;border:1px solid #eee;border-radius:8px;padding:6px 11px;font-size:12px;color:#999;cursor:pointer;}
+.prompt{font-size:22px;font-weight:600;color:#111;margin-bottom:6px;line-height:1.3;}
+.subprompt{font-size:14px;color:#888;margin-bottom:24px;}
+.main-btn{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid #eee;border-radius:14px;background:#fff;cursor:pointer;margin-bottom:10px;text-align:left;width:100%;}
+.btn-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-icon.green{background:#E1F5EE;}.btn-icon.blue{background:#E6F1FB;}.btn-icon.red{background:#FCEBEB;}
+.btn-label{font-size:15px;font-weight:600;color:#111;}
+.btn-sub{font-size:12px;color:#999;}
+.field-group{margin-bottom:16px;}
+.field-label{font-size:11px;font-weight:600;text-transform:uppercase;color:#aaa;margin-bottom:7px;display:block;}
+.sel,.custom-input{width:100%;padding:13px 14px;border:1px solid #eee;border-radius:10px;font-size:15px;background:#fff;appearance:none;-webkit-appearance:none;}
+.sel:disabled{color:#bbb;background:#f8f8f8;}
+.sel:focus,.custom-input:focus{outline:none;border-color:#1D9E75;}
+.green-btn{width:100%;padding:16px;background:#1D9E75;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:600;cursor:pointer;margin-top:18px;}
+.green-btn:disabled{background:#eee;color:#bbb;cursor:default;}
+.green-btn:active{background:#0F6E56;}
+.ghost-btn{width:100%;padding:14px;background:#fff;color:#333;border:1px solid #ddd;border-radius:13px;font-size:14px;font-weight:500;cursor:pointer;margin-top:10px;}
+.ghost-btn:active{background:#f8f8f8;}
+.tab-row{display:flex;gap:7px;margin-bottom:16px;}
+.tab-btn{flex:1;padding:9px;border:1px solid #eee;border-radius:9px;font-size:12px;background:#fff;color:#888;cursor:pointer;}
+.tab-btn.active-tab{background:#1D9E75;color:#fff;border-color:#1D9E75;}
+.pupil-item{padding:12px 14px;border:1px solid #eee;border-radius:10px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;}
+.pupil-item:active{background:#f8f8f8;}
+.pupil-item.recorded{border-color:#5DCAA5;background:#f0faf6;cursor:default;}
+.pupil-avatar{width:34px;height:34px;border-radius:50%;background:#E1F5EE;color:#0F6E56;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;}
+.pupil-name{font-size:14px;font-weight:500;color:#111;}
+.recorded-badge{margin-left:auto;font-size:10px;padding:3px 9px;border-radius:99px;background:#1D9E75;color:#fff;font-weight:600;}
+/* Fee options */
+.fee-option{padding:15px;border:1px solid #eee;border-radius:13px;margin-bottom:10px;cursor:pointer;background:#fff;}
+.fee-option.selected{border-color:#1D9E75;background:#f0faf6;}
+.fee-title{font-size:13px;font-weight:600;color:#111;}
+.fee-amount{font-size:22px;font-weight:600;color:#0F6E56;margin-top:4px;}
+.fee-tag{font-size:11px;color:#1D9E75;margin-top:2px;}
+.fee-custom-input{width:100%;padding:11px 13px;border:1px solid #ddd;border-radius:9px;font-size:15px;color:#111;background:#fff;margin-top:8px;-webkit-appearance:none;}
+.fee-custom-input:focus{outline:none;border-color:#1D9E75;}
+/* Summary */
+.summary-card{background:#f8f8f6;border-radius:13px;padding:16px;margin-bottom:14px;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;font-size:13px;}
+.sum-row:last-child{border-bottom:none;font-weight:600;font-size:15px;padding-top:12px;}
+.sum-label{color:#888;}.sum-val{color:#111;}.sum-val.green{color:#0F6E56;font-size:18px;}
+/* Success screen */
+.success-box{background:#f0faf6;border:1px solid #5DCAA5;border-radius:13px;padding:20px;text-align:center;margin-bottom:16px;}
+/* Sync status banner */
+.sync-banner{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.sync-banner.sending{background:#E6F1FB;color:#185FA5;border:1px solid #b5d4f4;}
+.sync-banner.success{background:#E1F5EE;color:#0F6E56;border:1px solid #5DCAA5;}
+.sync-banner.error{background:#FCEBEB;color:#A32D2D;border:1px solid #f7c1c1;}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sync-dot.sending{background:#378ADD;animation:pulse 1s infinite;}
+.sync-dot.success{background:#1D9E75;}
+.sync-dot.error{background:#E24B4A;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+/* PIN PAD */
+.pin-dots{display:flex;gap:16px;justify-content:center;margin:28px 0;}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid #ddd;background:#fff;transition:background .15s,border-color .15s;}
+.pin-dot.filled{background:#1D9E75;border-color:#1D9E75;}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:270px;margin:0 auto;}
+.pin-key{padding:20px;border:1px solid #eee;border-radius:13px;font-size:22px;background:#fff;cursor:pointer;font-weight:600;}
+.pin-key:active{background:#f0f0f0;}
+#receipt-preview{border:1px solid #eee;border-radius:13px;padding:20px;font-family:Arial,Helvetica,sans-serif;margin-bottom:10px;background:#fff;color:#111;}
+/* Breadcrumb */
+.breadcrumb{font-size:11px;color:#bbb;margin-bottom:16px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+/* Admin panel */
+.admin-section{background:#f8f8f6;border-radius:13px;padding:14px 16px;margin-bottom:14px;}
+.admin-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:12px;}
+.admin-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eee;font-size:14px;color:#111;}
+.admin-row:last-child{border-bottom:none;}
+.del-pupil{background:none;border:none;color:#e74c3c;font-size:18px;cursor:pointer;padding:4px 8px;line-height:1;}
+.add-row{display:flex;gap:8px;margin-top:10px;}
+.add-input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:9px;font-size:14px;color:#111;background:#fff;-webkit-appearance:none;}
+.add-input:focus{outline:none;border-color:#1D9E75;}
+.add-btn{padding:10px 16px;background:#1D9E75;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.add-btn:active{background:#0F6E56;}
+.select-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:9px;font-size:14px;color:#111;background:#fff;margin-bottom:10px;-webkit-appearance:none;}
+.select-input:focus{outline:none;border-color:#1D9E75;}
+.url-row{display:flex;flex-direction:column;gap:8px;}
+.url-input{width:100%;padding:11px 13px;border:1px solid #ddd;border-radius:9px;font-size:13px;color:#111;background:#fff;-webkit-appearance:none;}
+.url-input:focus{outline:none;border-color:#1D9E75;}
+.url-status{font-size:12px;min-height:18px;margin-top:2px;}
+/* Records */
+.record-item{padding:13px 15px;border:1px solid #eee;border-radius:11px;margin-bottom:9px;background:#fff;}
+.record-name{font-size:14px;font-weight:600;color:#111;}
+.record-meta{font-size:12px;color:#888;margin-top:2px;}
+.record-amount{font-size:15px;font-weight:600;color:#0F6E56;margin-top:5px;}
+.empty-state{text-align:center;color:#bbb;font-size:13px;padding:28px 0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ HOME ═══ -->
+<div class="screen active" id="s0">
+  <button class="settings-btn" onclick="go('s-pin')">⚙ Settings</button>
+  <div class="school-logo">
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 2L3 8v2h20V8L13 2z" fill="white"/><rect x="5" y="11" width="3" height="8" fill="white"/><rect x="11" y="11" width="3" height="8" fill="white"/><rect x="17" y="11" width="3" height="8" fill="white"/><rect x="3" y="20" width="20" height="2" rx="1" fill="white"/></svg>
+  </div>
+  <div class="prompt">What do you want to do?</div>
+  <div class="subprompt">Imukuro Grammar School Portal</div>
+  <button class="main-btn" onclick="openFlow('school')">
+    <div class="btn-icon green"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="#1D9E75" stroke-width="1.5"/><path d="M2 9h16" stroke="#1D9E75" stroke-width="1.5"/><circle cx="6" cy="13" r="1.2" fill="#1D9E75"/></svg></div>
+    <div><div class="btn-label">Record school fees</div><div class="btn-sub">Nursery, Primary &amp; Secondary</div></div>
+  </button>
+  <button class="main-btn" onclick="openFlow('lesson')">
+    <div class="btn-icon blue"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="2" width="12" height="16" rx="2" stroke="#378ADD" stroke-width="1.5"/><path d="M7 7h6M7 10.5h4" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    <div><div class="btn-label">Record lesson fees</div><div class="btn-sub">Primary &amp; Secondary</div></div>
+  </button>
+  <button class="main-btn" onclick="openFlow('incident')">
+    <div class="btn-icon red"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3L2 17h16L10 3z" stroke="#E24B4A" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 9v4" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="14.5" r=".8" fill="#E24B4A"/></svg></div>
+    <div><div class="btn-label">Report incident</div><div class="btn-sub">Behaviour &amp; health</div></div>
+  </button>
+  <div id="home-sync-status" style="margin-top:20px;text-align:center;font-size:12px;"></div>
+</div>
+
+<!-- ═══ SELECTION ═══ -->
+<div class="screen" id="s-select">
+  <div class="top-bar"><button class="back-btn" onclick="go('s0')">← Back</button><span class="screen-label" id="select-label">Fees</span></div>
+  <div class="prompt" id="select-title">Record Entry</div>
+  <div class="subprompt">Select the details below</div>
+  <div class="field-group">
+    <span class="field-label">Session</span>
+    <select class="sel" id="sel-session" onchange="syncState()">
+      <option value="">— Select session —</option>
+      <option>2023/2024</option>
+      <option>2024/2025</option>
+      <option>2025/2026</option>
+      <option>2026/2027</option>
+    </select>
+  </div>
+  <div class="field-group">
+    <span class="field-label">Category</span>
+    <select class="sel" id="sel-cat" onchange="loadClasses()">
+      <option value="">— Select category —</option>
+      <option>Nursery</option>
+      <option>Primary</option>
+      <option>Secondary</option>
+    </select>
+  </div>
+  <div class="field-group">
+    <span class="field-label">Class</span>
+    <select class="sel" id="sel-cls" onchange="syncState()">
+      <option value="">— Select class —</option>
+    </select>
+  </div>
+  <button class="green-btn" id="btn-to-pupils" disabled onclick="renderPupils();go('s-pupils')">Continue</button>
+</div>
+
+<!-- ═══ PUPILS ═══ -->
+<div class="screen" id="s-pupils">
+  <div class="top-bar"><button class="back-btn" onclick="go('s-select')">← Back</button><span class="screen-label">Pupils</span></div>
+  <div class="breadcrumb" id="bc-pupils"></div>
+  <div class="tab-row">
+    <button class="tab-btn active-tab" id="tab-all" onclick="setTab('all')">All</button>
+    <button class="tab-btn" id="tab-unrecorded" onclick="setTab('unrecorded')">Pending</button>
+    <button class="tab-btn" id="tab-recorded" onclick="setTab('recorded')">Recorded</button>
+  </div>
+  <div id="pupil-list"></div>
+</div>
+
+<!-- ═══ FEE OPTIONS ═══ -->
+<div class="screen" id="s-fee-form">
+  <div class="top-bar"><button class="back-btn" onclick="go('s-pupils')">← Back</button><span class="screen-label" id="fee-screen-label">Record Payment</span></div>
+  <div class="breadcrumb" id="bc-fees"></div>
+  <div class="prompt" style="font-size:17px;margin-bottom:4px;" id="fee-p-name"></div>
+  <div class="subprompt" id="fee-p-sub">Choose a payment option</div>
+  <div id="fee-options-container"></div>
+  <button class="green-btn" id="btn-confirm-fee" disabled onclick="saveFee()">Review &amp; Confirm</button>
+</div>
+
+<!-- ═══ SUMMARY ═══ -->
+<div class="screen" id="s-summary">
+  <div class="top-bar"><button class="back-btn" onclick="go('s-fee-form')">← Back</button><span class="screen-label">Summary</span></div>
+  <div class="prompt" style="font-size:18px;margin-bottom:18px;">Payment summary</div>
+  <div class="summary-card">
+    <div class="sum-row"><span class="sum-label">Pupil</span><span class="sum-val" id="sum-pupil"></span></div>
+    <div class="sum-row"><span class="sum-label">Session</span><span class="sum-val" id="sum-session"></span></div>
+    <div class="sum-row"><span class="sum-label">Class</span><span class="sum-val" id="sum-class"></span></div>
+    <div class="sum-row"><span class="sum-label">Category</span><span class="sum-val" id="sum-cat"></span></div>
+    <div class="sum-row"><span class="sum-label">Fee type</span><span class="sum-val" id="sum-feetype"></span></div>
+    <div class="sum-row"><span class="sum-label">Invoice #</span><span class="sum-val" id="sum-inv"></span></div>
+    <div class="sum-row"><span class="sum-label">Date</span><span class="sum-val" id="sum-date"></span></div>
+    <div class="sum-row"><span class="sum-label">Amount</span><span class="sum-val green" id="sum-amount"></span></div>
+  </div>
+  <button class="green-btn" onclick="confirmAndReceipt()">Confirm &amp; generate receipt</button>
+</div>
+
+<!-- ═══ RECEIPT ═══ -->
+<div class="screen" id="s-receipt">
+  <div class="top-bar"><span class="screen-label">Receipt</span></div>
+  <!-- Success box -->
+  <div class="success-box">
+    <div style="font-size:28px;margin-bottom:8px;">✓</div>
+    <div style="font-weight:700;font-size:16px;color:#0F6E56;margin-bottom:4px;">Payment recorded!</div>
+    <div style="font-size:13px;color:#555;" id="success-msg"></div>
+  </div>
+  <div id="sync-banner-area"></div>
+  <div id="receipt-preview"></div>
+  <button class="green-btn" style="margin-top:0;" onclick="downloadPDF()">⬇ Download PDF receipt</button>
+  <button class="ghost-btn" onclick="go('s0')">Back to home</button>
+</div>
+
+<!-- ═══ INCIDENT ═══ -->
+<div class="screen" id="s-incident">
+  <div class="top-bar"><button class="back-btn" onclick="go('s-pupils')">← Back</button><span class="screen-label">Report</span></div>
+  <div class="prompt" style="font-size:18px;" id="inc-p-name"></div>
+  <div class="field-group"><span class="field-label">Type</span><select class="sel" id="inc-type"><option>Discipline</option><option>Medical</option><option>Other</option></select></div>
+  <div class="field-group"><span class="field-label">Severity</span><select class="sel" id="inc-sev"><option>Low</option><option>Medium</option><option>High</option></select></div>
+  <div class="field-group"><span class="field-label">Description</span><textarea class="custom-input" id="inc-desc" style="height:100px;resize:none;"></textarea></div>
+  <button class="green-btn" onclick="saveIncident()">Save &amp; Sync</button>
+</div>
+
+<!-- ═══ PIN ═══ -->
+<div class="screen" id="s-pin">
+  <div class="top-bar"><button class="back-btn" onclick="go('s0')">← Back</button></div>
+  <div class="prompt">Enter PIN</div>
+  <div class="subprompt">Admin panel is PIN-protected</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div style="color:#c0392b;font-size:13px;text-align:center;min-height:20px;margin-top:8px;" id="pin-error"></div>
+  <div class="pin-grid">
+    <button class="pin-key" onclick="pressPin('1')">1</button><button class="pin-key" onclick="pressPin('2')">2</button><button class="pin-key" onclick="pressPin('3')">3</button>
+    <button class="pin-key" onclick="pressPin('4')">4</button><button class="pin-key" onclick="pressPin('5')">5</button><button class="pin-key" onclick="pressPin('6')">6</button>
+    <button class="pin-key" onclick="pressPin('7')">7</button><button class="pin-key" onclick="pressPin('8')">8</button><button class="pin-key" onclick="pressPin('9')">9</button>
+    <div></div><button class="pin-key" onclick="pressPin('0')">0</button><button class="pin-key" style="font-size:16px;color:#888;" onclick="pinDel()">⌫</button>
+  </div>
+</div>
+
+<!-- ═══ ADMIN ═══ -->
+<div class="screen" id="s-admin">
+  <div class="top-bar"><button class="back-btn" onclick="go('s0')">← Back</button><span class="screen-label">Admin panel</span></div>
+  <div class="prompt" style="font-size:19px;margin-bottom:20px;">Admin panel</div>
+
+  <div class="admin-section">
+    <div class="admin-section-title">Google Sheets connection</div>
+    <p style="font-size:13px;color:#666;margin-bottom:10px;line-height:1.6;">Paste your Apps Script Web App URL below. Confirmed payments will be sent to your Google Sheet automatically.</p>
+    <div class="url-row">
+      <input class="url-input" id="admin-url" type="url" placeholder="https://script.google.com/macros/s/…/exec"/>
+      <button class="add-btn" style="width:100%;margin-top:8px;" onclick="saveAdmin()">Save URL</button>
+    </div>
+    <div class="url-status" id="url-status"></div>
+    <button class="ghost-btn" style="margin-top:10px;font-size:13px;padding:10px;" onclick="testSheetConnection()">Test connection</button>
+  </div>
+
+  <div class="admin-section">
+    <div class="admin-section-title">Manage pupils</div>
+    <select class="select-input" id="admin-mode" onchange="adminModeChange()">
+      <option value="">Select fee type…</option>
+      <option value="school">School fees</option>
+      <option value="lesson">Lesson fees</option>
+    </select>
+    <select class="select-input" id="admin-cat" onchange="adminCatChange()" disabled><option value="">Select category…</option></select>
+    <select class="select-input" id="admin-cls" onchange="renderAdminPupils()" disabled><option value="">Select class…</option></select>
+    <div id="admin-pupil-list"></div>
+    <div class="add-row" id="admin-add-row" style="display:none;">
+      <input class="add-input" id="new-pupil-name" type="text" placeholder="Enter full name"/>
+      <button class="add-btn" onclick="addPupil()">Add</button>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <div class="admin-section-title">Change PIN</div>
+    <div class="add-row">
+      <input class="add-input" id="new-pin" type="number" placeholder="New 4-digit PIN"/>
+      <button class="add-btn" onclick="changePin()">Save</button>
+    </div>
+    <div id="pin-change-msg" style="font-size:12px;color:#1D9E75;margin-top:8px;min-height:18px;"></div>
+  </div>
+
+  <div class="admin-section">
+    <div class="admin-section-title">Maintenance</div>
+    <button class="ghost-btn" style="color:#e74c3c;border-color:#fadbd8;" onclick="clearAllLocalData()">⚠️ Clear ALL local records</button>
+    <p style="font-size:10px;color:#999;margin-top:6px;">This only deletes records from THIS phone. Google Sheets data is safe.</p>
+  </div>
+
+  <button class="ghost-btn" onclick="go('s-records');renderRecords()">View payment records</button>
+  <button class="ghost-btn" style="margin-top:8px;" onclick="exportCSV()">Export records (CSV)</button>
+</div>
+
+<!-- ═══ RECORDS ═══ -->
+<div class="screen" id="s-records">
+  <div class="top-bar"><button class="back-btn" onclick="go('s-admin')">← Back</button><span class="screen-label">Records</span></div>
+  <div class="prompt" style="font-size:18px;margin-bottom:6px;">Payment records</div>
+  <div id="records-summary" style="font-size:13px;color:#888;margin-bottom:16px;"></div>
+  <div id="records-list"></div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ── DATA ─────────────────────────────────────────────
+const SCHOOL_DATA = {
+  Nursery:{
+    classes:['Nursery 1','Nursery 2','Nursery 3'],
+    fees:{full:45000},
+    pupils:{
+      'Nursery 1':['Ada Obi','Chisom Eze','Emeka Nwosu','Fatima Sule','Grace Adamu'],
+      'Nursery 2':['Hassan Bello','Ifeoma Okeke','James Duru','Kemi Alade','Lami Yusuf'],
+      'Nursery 3':['Michael Ojo','Ngozi Chukwu','Obiora Ike','Patience Ogah','Remi Falade']
+    }
+  },
+  Primary:{
+    classes:['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5'],
+    fees:{full:50000},
+    pupils:{
+      'Primary 1':['Amina Garba','Bright Osei','Chidi Nkem','Dupe Adeyemi','Emeka Obi'],
+      'Primary 2':['Funmi Abiola','Gbenga Ojo','Halima Musa','Ike Nnadi','Jack Balogun'],
+      'Primary 3':['Kola Adeyemi','Lara Oke','Moses Agu','Nkechi Ofor','Obi Eze'],
+      'Primary 4':['Ola Badmus','Precious Nweke','Queen Eze','Roland Obi','Seun Lawal'],
+      'Primary 5':['Tunde Afolabi','Uche Nwachukwu','Vera Okafor','Wale Ayeni','Yetunde Balogun']
+    }
+  },
+  Secondary:{
+    classes:['JSS 1','JSS 2','JSS 3'],
+    fees:{full:75000},
+    pupils:{
+      'JSS 1':['Aisha Musa','Bode Ojo','Chibundo Eze','Dapo Afolabi','Esther Nnaji'],
+      'JSS 2':['Femi Adeyemi','Gbemi Sule','Habib Bello','Isioma Obi','Jerome Okafor'],
+      'JSS 3':['Kachi Nwosu','Laila Garba','Madu Chukwu','Nnamdi Ibe','Ola Abubakar']
+    }
+  }
+};
+
+const LESSON_DATA = {
+  Primary:{
+    classes:['Primary 1','Primary 2','Primary 3','Primary 4','Primary 5'],
+    fees:{full:5000, max:20000},
+    pupils:{
+      'Primary 1':['Amina Garba','Bright Osei','Chidi Nkem','Dupe Adeyemi','Emeka Obi'],
+      'Primary 2':['Funmi Abiola','Gbenga Ojo','Halima Musa','Ike Nnadi','Jack Balogun'],
+      'Primary 3':['Kola Adeyemi','Lara Oke','Moses Agu','Nkechi Ofor','Obi Eze'],
+      'Primary 4':['Ola Badmus','Precious Nweke','Queen Eze','Roland Obi','Seun Lawal'],
+      'Primary 5':['Tunde Afolabi','Uche Nwachukwu','Vera Okafor','Wale Ayeni','Yetunde Balogun']
+    }
+  },
+  Secondary:{
+    classes:['JSS 1','JSS 2','JSS 3'],
+    fees:{full:7000, max:20000},
+    pupils:{
+      'JSS 1':['Aisha Musa','Bode Ojo','Chibundo Eze','Dapo Afolabi','Esther Nnaji'],
+      'JSS 2':['Femi Adeyemi','Gbemi Sule','Habib Bello','Isioma Obi','Jerome Okafor'],
+      'JSS 3':['Kachi Nwosu','Laila Garba','Madu Chukwu','Nnamdi Ibe','Ola Abubakar']
+    }
+  }
+};
+
+// ── STATE ─────────────────────────────────────────────
+let SHEETS_URL = localStorage.getItem('igs_url') || '';
+let ADMIN_PIN = localStorage.getItem('igs_admin_pin') || '4321';
+let syncQueue = JSON.parse(localStorage.getItem('igs_sync_queue') || '[]');
+const paymentLog = JSON.parse(localStorage.getItem('igs_payment_log') || '[]');
+const recordedMap = JSON.parse(localStorage.getItem('igs_paid_map') || '{}');
+let state = { mode:'', session:'', cat:'', cls:'', pupil:'', feeType:'', amount:0, invoice:'', date:'', tab:'all' };
+let pinEntry = '';
+
+// ── NAV ───────────────────────────────────────────────
+function go(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── OPEN FLOW ─────────────────────────────────────────
+function openFlow(m){
+  state.mode = m;
+  if(m === 'incident'){
+    // For incident, use school data to pick a pupil
+    document.getElementById('select-label').textContent = 'INCIDENT';
+    document.getElementById('select-title').textContent = 'Report Incident';
+  } else {
+    document.getElementById('select-label').textContent = m === 'school' ? 'SCHOOL FEES' : 'LESSON FEES';
+    document.getElementById('select-title').textContent = m === 'school' ? 'Record school fees' : 'Record lesson fees';
+  }
+  // Reset dropdowns
+  document.getElementById('sel-session').value = '';
+  const catSel = document.getElementById('sel-cat');
+  catSel.innerHTML = '<option value="">— Select category —</option>';
+  const cats = m === 'lesson' ? Object.keys(LESSON_DATA) : ['Nursery','Primary','Secondary'];
+  cats.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o); });
+  document.getElementById('sel-cls').innerHTML = '<option value="">— Select class —</option>';
+  document.getElementById('btn-to-pupils').disabled = true;
+  state.session=''; state.cat=''; state.cls='';
+  go('s-select');
+}
+
+function loadClasses(){
+  state.cat = document.getElementById('sel-cat').value;
+  const s = document.getElementById('sel-cls');
+  s.innerHTML = '<option value="">— Select class —</option>';
+  if(state.cat){
+    const data = state.mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+    if(data[state.cat]) data[state.cat].classes.forEach(c => {
+      let o = document.createElement('option'); o.value=c; o.textContent=c; s.appendChild(o);
+    });
+  }
+  syncState();
+}
+
+function syncState(){
+  state.session = document.getElementById('sel-session').value;
+  state.cls = document.getElementById('sel-cls').value;
+  document.getElementById('btn-to-pupils').disabled = !(state.session && state.cat && state.cls);
+}
+
+// ── PUPILS ────────────────────────────────────────────
+function setTab(t){
+  state.tab = t;
+  ['all','unrecorded','recorded'].forEach(id => {
+    const el = document.getElementById('tab-'+id);
+    if(el) el.classList.toggle('active-tab', id === t);
+  });
+  renderPupils();
+}
+
+function recordedKey(pupil){ return state.mode+'/'+state.session+'/'+state.cat+'/'+state.cls+'/'+pupil; }
+
+function renderPupils(){
+  document.getElementById('bc-pupils').innerHTML =
+    `<span>${state.session}</span><span style="color:#ddd;"> › </span><span>${state.cat}</span><span style="color:#ddd;"> › </span><span style="color:#111;">${state.cls}</span>`;
+  const data = state.mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+  const all = (data[state.cat] && data[state.cat].pupils[state.cls]) || [];
+  let filtered = all;
+  if(state.tab === 'recorded') filtered = all.filter(p => recordedMap[recordedKey(p)]);
+  if(state.tab === 'unrecorded') filtered = all.filter(p => !recordedMap[recordedKey(p)]);
+  const list = document.getElementById('pupil-list');
+  list.innerHTML = '';
+  if(filtered.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:#bbb;font-size:13px;padding:28px 0;">No pupils in this view.</div>';
+    return;
+  }
+  filtered.forEach(p => {
+    const isRec = !!recordedMap[recordedKey(p)];
+    const d = document.createElement('div');
+    d.className = 'pupil-item' + (isRec ? ' recorded' : '');
+    d.innerHTML = `<div class="pupil-avatar">${initials(p)}</div><span class="pupil-name">${p}</span>${isRec ? '<span class="recorded-badge">Recorded</span>' : '<span style="margin-left:auto;color:#ccc;font-size:18px;">›</span>'}`;
+    if(!isRec){
+      d.onclick = () => {
+        state.pupil = p;
+        if(state.mode === 'incident'){
+          document.getElementById('inc-p-name').textContent = p;
+          go('s-incident');
+        } else {
+          openFeeForm(p);
+        }
+      };
+    }
+    list.appendChild(d);
+  });
+}
+
+// ── FEE FORM ──────────────────────────────────────────
+function openFeeForm(name){
+  const isLesson = state.mode === 'lesson';
+  const data = isLesson ? LESSON_DATA : SCHOOL_DATA;
+  const fees = data[state.cat].fees;
+  document.getElementById('fee-screen-label').textContent = isLesson ? 'Record Lesson Fee' : 'Record School Fee';
+  document.getElementById('fee-p-name').textContent = name;
+  document.getElementById('fee-p-sub').textContent = state.cls + ' · ' + state.cat + ' · ' + state.session;
+  document.getElementById('bc-fees').innerHTML =
+    `<span>${state.session}</span><span style="color:#ddd;"> › </span><span>${state.cat}</span><span style="color:#ddd;"> › </span><span>${state.cls}</span><span style="color:#ddd;"> › </span><span style="color:#111;">${name}</span>`;
+
+  let html = `<div class="fee-option" id="opt-full" onclick="selectFee('full')">
+    <div class="fee-title">${isLesson ? 'Standard lesson fee' : 'Full tuition'}</div>
+    <div class="fee-amount">${fmtN(fees.full)}</div>
+    <div class="fee-tag">${isLesson ? 'Standard rate per term' : 'Full term payment'}</div>
+  </div>`;
+
+  if(!isLesson){
+    html += `<div class="fee-option" id="opt-half" onclick="selectFee('half')">
+      <div class="fee-title">Half tuition</div>
+      <div class="fee-amount">${fmtN(Math.round(fees.full / 2))}</div>
+      <div class="fee-tag">50% of full amount</div>
+    </div>`;
+  }
+
+  html += `<div class="fee-option" id="opt-custom" onclick="selectFee('custom')">
+    <div class="fee-title">Custom amount</div>
+    <input class="fee-custom-input" id="custom-val" type="number"
+      placeholder="Enter amount (₦)${isLesson ? ' — max ₦' + Number(fees.max).toLocaleString() : ''}"
+      onclick="event.stopPropagation()" oninput="selectFee('custom')"/>
+    ${isLesson ? '<div class="fee-tag" style="margin-top:6px;">Maximum: ' + fmtN(fees.max) + '</div>' : ''}
+  </div>`;
+
+  document.getElementById('fee-options-container').innerHTML = html;
+  document.getElementById('btn-confirm-fee').disabled = true;
+  state.feeType = ''; state.amount = 0;
+  go('s-fee-form');
+}
+
+function selectFee(type){
+  state.feeType = type;
+  document.querySelectorAll('.fee-option').forEach(el => el.classList.remove('selected'));
+  const el = document.getElementById('opt-'+type); if(el) el.classList.add('selected');
+  const isLesson = state.mode === 'lesson';
+  const data = isLesson ? LESSON_DATA : SCHOOL_DATA;
+  const fees = data[state.cat].fees;
+  const btn = document.getElementById('btn-confirm-fee');
+  if(type === 'full'){ state.amount = fees.full; btn.disabled = false; }
+  else if(type === 'half'){ state.amount = Math.round(fees.full / 2); btn.disabled = false; }
+  else {
+    const v = parseFloat(document.getElementById('custom-val').value);
+    const max = fees.max || Infinity;
+    if(v && v > 0 && v <= max){ state.amount = v; btn.disabled = false; }
+    else { state.amount = 0; btn.disabled = true; }
+  }
+}
+
+// ── SAVE FEE (goes to summary first) ─────────────────
+function saveFee(){
+  state.invoice = 'INV-' + Math.floor(10000 + Math.random() * 89999);
+  state.date = new Date().toLocaleDateString('en-GB');
+  const isLesson = state.mode === 'lesson';
+  const feeLabel = state.feeType === 'full' ? (isLesson ? 'Standard lesson fee' : 'Full tuition') :
+                   state.feeType === 'half' ? 'Half tuition' : 'Custom amount';
+  document.getElementById('sum-pupil').textContent = state.pupil;
+  document.getElementById('sum-session').textContent = state.session;
+  document.getElementById('sum-class').textContent = state.cls;
+  document.getElementById('sum-cat').textContent = state.cat;
+  document.getElementById('sum-feetype').textContent = feeLabel;
+  document.getElementById('sum-inv').textContent = state.invoice;
+  document.getElementById('sum-date').textContent = state.date;
+  document.getElementById('sum-amount').textContent = fmtN(state.amount);
+  go('s-summary');
+}
+
+function confirmAndReceipt(){
+  const isLesson = state.mode === 'lesson';
+  const feeLabel = state.feeType === 'full' ? (isLesson ? 'Standard' : 'Full tuition') :
+                   state.feeType === 'half' ? 'Half tuition' : 'Custom';
+  const rec = {
+    recordType: 'fee',
+    mode: isLesson ? 'Lesson fees' : 'School fees',
+    pupil: state.pupil, session: state.session,
+    cls: state.cls, category: state.cat,
+    feeType: feeLabel, amount: Number(state.amount),
+    invoice: state.invoice, date: state.date,
+    timestamp: new Date().toISOString()
+  };
+  recordedMap[recordedKey(state.pupil)] = true;
+  paymentLog.push(rec);
+  localStorage.setItem('igs_paid_map', JSON.stringify(recordedMap));
+  localStorage.setItem('igs_payment_log', JSON.stringify(paymentLog));
+  queueSync(rec);
+  buildReceipt(rec);
+  document.getElementById('success-msg').textContent =
+    state.pupil + ' · ' + state.cls + ' · ' + fmtN(state.amount);
+  go('s-receipt');
+}
+
+// ── RECEIPT ───────────────────────────────────────────
+function buildReceipt(r){
+  const feeLabel = r.mode === 'Lesson fees' ? 'LESSON FEES' : 'SCHOOL FEES';
+  document.getElementById('receipt-preview').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:700;letter-spacing:.03em;">IMUKURO GRAMMAR SCHOOL</div>
+      <div style="font-size:10px;margin-top:4px;color:#555;">ADJACENT BUILDING MATERIAL MARKET, SAUKA KA HUTA</div>
+      <div style="font-size:10px;color:#555;">MINNA, NIGER STATE &nbsp;|&nbsp; 123-456-7890</div>
+    </div>
+    <div style="background:#FFE900;display:inline-block;padding:7px 16px;font-size:14px;font-weight:700;margin-bottom:14px;">RECEIPT</div>
+    <table style="width:100%;font-size:11px;margin-bottom:12px;border-collapse:collapse;">
+      <tr><td style="color:#666;padding:3px 0;width:40%;">Issued to:</td><td style="text-align:right;font-weight:700;">${r.pupil}</td></tr>
+      <tr><td style="color:#666;padding:3px 0;">Invoice #</td><td style="text-align:right;font-weight:700;">${r.invoice}</td></tr>
+      <tr><td style="color:#666;padding:3px 0;">Date</td><td style="text-align:right;font-weight:700;">${r.date}</td></tr>
+      <tr><td style="color:#666;padding:3px 0;">Session</td><td style="text-align:right;">${r.session}</td></tr>
+      <tr><td style="color:#666;padding:3px 0;">Class</td><td style="text-align:right;">${r.cls} — ${r.category}</td></tr>
+    </table>
+    <table style="width:100%;font-size:11px;border-collapse:collapse;border-top:1.5px solid #111;border-bottom:1.5px solid #111;margin-bottom:12px;">
+      <tr style="font-weight:700;"><td style="padding:6px 0;">Item</td><td style="text-align:center;">Qty</td><td style="text-align:right;">Unit Price</td><td style="text-align:right;">Total</td></tr>
+      <tr style="border-top:0.5px solid #ddd;">
+        <td style="padding:6px 0;font-weight:700;">${feeLabel}</td>
+        <td style="text-align:center;">1</td>
+        <td style="text-align:right;">${fmtN(r.amount)}</td>
+        <td style="text-align:right;font-weight:700;">${fmtN(r.amount)}</td>
+      </tr>
+      <tr><td colspan="3" style="padding:6px 0;text-align:right;font-weight:700;">Total</td><td style="text-align:right;font-weight:700;">${fmtN(r.amount)}</td></tr>
+    </table>
+    <div style="font-size:10px;margin-bottom:16px;">
+      <div style="font-weight:700;margin-bottom:5px;">PAYMENT METHOD</div>
+      <div>ZENITH BANK</div>
+      <div>Account Name: IMUKURO GRAMMAR SCHOOL</div>
+      <div>Account No.: 0123 4567 8901</div>
+    </div>
+    <div style="border-top:1px solid #111;padding-top:10px;text-align:center;font-size:11px;">
+      <div style="margin-bottom:8px;">Authorized Signed</div>
+      <div style="font-weight:700;">Thank you for your payment!</div>
+    </div>`;
+}
+
+function downloadPDF(){
+  if(!window.jspdf){ alert('PDF library loading, please try again.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a5' });
+  const r = { pupil:state.pupil, invoice:state.invoice, date:state.date, session:state.session,
+    cls:state.cls, category:state.cat, amount:state.amount, mode:state.mode };
+  const isLesson = r.mode === 'lesson';
+  const feeLabel = isLesson ? 'LESSON FEES' : 'SCHOOL FEES';
+  const W=148, m=14;
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text('IMUKURO GRAMMAR SCHOOL', W/2, 18, {align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('ADJACENT BUILDING MATERIAL MARKET, SAUKA KA HUTA', W/2, 24, {align:'center'});
+  doc.text('MINNA, NIGER STATE  |  123-456-7890', W/2, 28, {align:'center'});
+  doc.setFillColor(255,233,0); doc.rect(m, 32, 52, 9, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(0,0,0);
+  doc.text('RECEIPT', m+4, 38.5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); let y=50;
+  doc.text('Issued to:', m, y); doc.setFont('helvetica','bold'); doc.text(r.pupil, W-m, y, {align:'right'}); doc.setFont('helvetica','normal');
+  y+=6; doc.text('Invoice #:', m, y); doc.setFont('helvetica','bold'); doc.text(r.invoice, W-m, y, {align:'right'}); doc.setFont('helvetica','normal');
+  y+=6; doc.text('Date:', m, y); doc.setFont('helvetica','bold'); doc.text(r.date, W-m, y, {align:'right'}); doc.setFont('helvetica','normal');
+  y+=6; doc.text('Session:', m, y); doc.text(r.session, W-m, y, {align:'right'});
+  y+=6; doc.text('Class:', m, y); doc.text(r.cls+' — '+r.category, W-m, y, {align:'right'});
+  y+=9; doc.setLineWidth(0.5); doc.line(m, y, W-m, y); y+=5;
+  doc.setFont('helvetica','bold');
+  doc.text('Item', m, y); doc.text('Qty', 90, y, {align:'center'}); doc.text('Unit Price', 118, y, {align:'right'}); doc.text('Total', W-m, y, {align:'right'});
+  y+=1; doc.line(m, y, W-m, y); y+=5;
+  doc.setFont('helvetica','bold'); doc.text(feeLabel, m, y); doc.setFont('helvetica','normal');
+  doc.text('1', 90, y, {align:'center'}); doc.text(fmtN(r.amount), 118, y, {align:'right'});
+  doc.setFont('helvetica','bold'); doc.text(fmtN(r.amount), W-m, y, {align:'right'}); doc.setFont('helvetica','normal');
+  y+=7; doc.line(m, y, W-m, y); y+=5;
+  doc.setFont('helvetica','bold'); doc.text('Total', 118, y, {align:'right'}); doc.text(fmtN(r.amount), W-m, y, {align:'right'}); doc.setFont('helvetica','normal');
+  y+=10; doc.setFont('helvetica','bold'); doc.text('PAYMENT METHOD', m, y); doc.setFont('helvetica','normal');
+  y+=5; doc.text('ZENITH BANK', m, y);
+  y+=5; doc.text('Account Name: IMUKURO GRAMMAR SCHOOL', m, y);
+  y+=5; doc.text('Account No.: 0123 4567 8901', m, y);
+  y+=14; doc.line(m+10, y, W-m-10, y);
+  y+=5; doc.text('Authorized Signed', W/2, y, {align:'center'});
+  y+=7; doc.setFont('helvetica','bold'); doc.text('Thank you for your payment!', W/2, y, {align:'center'});
+  doc.save('Receipt_'+r.pupil.replace(/ /g,'_')+'_'+r.invoice+'.pdf');
+}
+
+// ── INCIDENT ──────────────────────────────────────────
+function saveIncident(){
+  const rec = {
+    recordType: 'incident',
+    pupil: state.pupil, cls: state.cls, category: state.cat,
+    type: document.getElementById('inc-type').value,
+    severity: document.getElementById('inc-sev').value,
+    description: document.getElementById('inc-desc').value,
+    timestamp: new Date().toISOString()
+  };
+  queueSync(rec);
+  alert('Incident saved locally.');
+  go('s0');
+}
+
+// ── SYNC ──────────────────────────────────────────────
+function queueSync(r){
+  syncQueue.push(r);
+  localStorage.setItem('igs_sync_queue', JSON.stringify(syncQueue));
+  processQueue();
+}
+
+let _syncing = false;
+async function processQueue(){
+  if(_syncing || !SHEETS_URL || syncQueue.length === 0 || !navigator.onLine){ updateUI(); return; }
+  _syncing = true;
+  updateUI();
+  try {
+    // Google Apps Script requires form-encoded body to survive its 302 redirect.
+    // redirect:'follow' ensures the POST reaches the doPost() handler.
+    const response = await fetch(SHEETS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(JSON.stringify(syncQueue[0]))
+    });
+    if(response.ok){
+      syncQueue.shift();
+      localStorage.setItem('igs_sync_queue', JSON.stringify(syncQueue));
+      _syncing = false;
+      if(syncQueue.length > 0) processQueue(); // drain remaining
+    } else {
+      console.warn('Sync: server returned', response.status, '— will retry.');
+      _syncing = false;
+    }
+  } catch(e){
+    console.warn('Sync error:', e.message, '— will retry on next cycle.');
+    _syncing = false;
+  }
+  updateUI();
+}
+
+function updateUI(){
+  const s = document.getElementById('home-sync-status');
+  const b = document.getElementById('sync-banner-area');
+  if(!SHEETS_URL){
+    if(s){ s.textContent = 'Google Sheets not connected'; s.style.color = '#bbb'; }
+    if(b) b.innerHTML = `<div class="sync-banner error"><div class="sync-dot error"></div>No Sheet connected — go to Settings</div>`;
+    return;
+  }
+  if(_syncing){
+    if(s){ s.textContent = 'Syncing…'; s.style.color = '#378ADD'; }
+    if(b) b.innerHTML = `<div class="sync-banner sending"><div class="sync-dot sending"></div>Syncing to Google Sheets…</div>`;
+    return;
+  }
+  const pending = syncQueue.length > 0;
+  const msg = pending ? `${syncQueue.length} record(s) pending sync…` : `All records synced ✓`;
+  if(s){ s.textContent = msg; s.style.color = pending ? 'orange' : '#1D9E75'; }
+  if(b) b.innerHTML = `<div class="sync-banner ${pending ? 'sending' : 'success'}">
+    <div class="sync-dot ${pending ? 'sending' : 'success'}"></div>${msg}</div>`;
+}
+
+// ── PIN ───────────────────────────────────────────────
+function pressPin(k){
+  if(k === 'C'){ pinEntry = ''; document.getElementById('pin-error').textContent = ''; updateDots(); return; }
+  if(pinEntry.length >= 4) return;
+  pinEntry += k;
+  updateDots();
+  if(pinEntry.length === 4){
+    setTimeout(() => {
+      if(pinEntry === ADMIN_PIN){
+        resetPin();
+        document.getElementById('admin-url').value = SHEETS_URL;
+        go('s-admin');
+      } else {
+        document.getElementById('pin-error').textContent = 'Incorrect PIN. Press C to clear.';
+        pinEntry = ''; updateDots();
+      }
+    }, 200);
+  }
+}
+function pinDel(){ pinEntry = pinEntry.slice(0,-1); document.getElementById('pin-error').textContent = ''; updateDots(); }
+function updateDots(){ const dots = document.getElementById('pin-dots').children; for(let i=0;i<4;i++) dots[i].classList.toggle('filled', i < pinEntry.length); }
+function resetPin(){ pinEntry = ''; updateDots(); document.getElementById('pin-error').textContent = ''; }
+function changePin(){
+  const v = document.getElementById('new-pin').value.trim();
+  const msg = document.getElementById('pin-change-msg');
+  if(!/^\d{4}$/.test(v)){ msg.textContent = 'Use exactly 4 digits.'; msg.style.color = '#c0392b'; return; }
+  ADMIN_PIN = v;
+  localStorage.setItem('igs_admin_pin', v);
+  document.getElementById('new-pin').value = '';
+  msg.textContent = 'PIN updated.'; msg.style.color = '#1D9E75';
+  setTimeout(() => { msg.textContent = ''; }, 3000);
+}
+
+function saveAdmin(){
+  const val = document.getElementById('admin-url').value.trim();
+  const status = document.getElementById('url-status');
+  if(val && !val.startsWith('https://script.google.com')){
+    status.textContent = 'Please paste a valid Apps Script URL.'; status.style.color = '#c0392b'; return;
+  }
+  SHEETS_URL = val;
+  localStorage.setItem('igs_url', SHEETS_URL);
+  status.textContent = 'URL saved successfully.'; status.style.color = '#1D9E75';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+  processQueue();
+}
+async function testSheetConnection(){
+  const status = document.getElementById('url-status');
+  if(!SHEETS_URL){ status.textContent = 'No URL saved yet.'; status.style.color = '#c0392b'; return; }
+  status.textContent = 'Testing…'; status.style.color = '#378ADD';
+  try {
+    const r = await fetch(SHEETS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(JSON.stringify({test:true}))
+    });
+    if(r.ok){
+      status.textContent = '✓ Connected successfully.'; status.style.color = '#1D9E75';
+    } else {
+      status.textContent = 'Server error ' + r.status + '. Check script deployment.'; status.style.color = '#c0392b';
+    }
+  } catch(e){
+    status.textContent = 'Connection failed: ' + e.message; status.style.color = '#c0392b';
+  }
+}
+
+// ── ADMIN PUPILS ──────────────────────────────────────
+function adminModeChange(){
+  const mode = document.getElementById('admin-mode').value;
+  const catSel = document.getElementById('admin-cat');
+  catSel.innerHTML = '<option value="">Select category…</option>'; catSel.disabled = !mode;
+  document.getElementById('admin-cls').innerHTML = '<option value="">Select class…</option>';
+  document.getElementById('admin-cls').disabled = true;
+  document.getElementById('admin-pupil-list').innerHTML = '';
+  document.getElementById('admin-add-row').style.display = 'none';
+  if(!mode) return;
+  const data = mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+  Object.keys(data).forEach(cat => { const o = document.createElement('option'); o.value = cat; o.textContent = cat; catSel.appendChild(o); });
+}
+function adminCatChange(){
+  const mode = document.getElementById('admin-mode').value, cat = document.getElementById('admin-cat').value;
+  const clsSel = document.getElementById('admin-cls');
+  clsSel.innerHTML = '<option value="">Select class…</option>'; clsSel.disabled = !cat;
+  document.getElementById('admin-pupil-list').innerHTML = '';
+  document.getElementById('admin-add-row').style.display = 'none';
+  if(!cat || !mode) return;
+  const data = mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+  (data[cat].classes || []).forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; clsSel.appendChild(o); });
+}
+function renderAdminPupils(){
+  const mode = document.getElementById('admin-mode').value, cat = document.getElementById('admin-cat').value, cls = document.getElementById('admin-cls').value;
+  const list = document.getElementById('admin-pupil-list');
+  document.getElementById('admin-add-row').style.display = 'none';
+  if(!mode || !cat || !cls){ list.innerHTML = ''; return; }
+  document.getElementById('admin-add-row').style.display = 'flex';
+  const data = mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+  const pupils = (data[cat] && data[cat].pupils[cls]) || [];
+  list.innerHTML = pupils.length === 0 ? '<div class="empty-state">No pupils.</div>' :
+    pupils.map((p, i) => `<div class="admin-row"><span>${p}</span><button class="del-pupil" onclick="removePupil('${mode}','${cat}','${cls}',${i})">✕</button></div>`).join('');
+}
+function addPupil(){
+  const mode = document.getElementById('admin-mode').value, cat = document.getElementById('admin-cat').value, cls = document.getElementById('admin-cls').value;
+  const inp = document.getElementById('new-pupil-name'), name = inp.value.trim();
+  if(!mode || !cat || !cls || !name) return;
+  const data = mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+  if(!data[cat].pupils[cls]) data[cat].pupils[cls] = [];
+  data[cat].pupils[cls].push(name); inp.value = ''; renderAdminPupils();
+}
+function removePupil(mode, cat, cls, idx){
+  const data = mode === 'lesson' ? LESSON_DATA : SCHOOL_DATA;
+  if(confirm('Remove ' + data[cat].pupils[cls][idx] + '?')){ data[cat].pupils[cls].splice(idx, 1); renderAdminPupils(); }
+}
+function clearAllLocalData(){
+  if(confirm('Delete ALL local records? Google Sheets data is safe.')){
+    localStorage.removeItem('igs_payment_log');
+    localStorage.removeItem('igs_paid_map');
+    localStorage.removeItem('igs_sync_queue');
+    alert('Local data cleared.'); location.reload();
+  }
+}
+
+// ── RECORDS ───────────────────────────────────────────
+function renderRecords(){
+  const list = document.getElementById('records-list'), summary = document.getElementById('records-summary');
+  if(paymentLog.length === 0){ summary.textContent = 'No records yet.'; list.innerHTML = '<div class="empty-state">Nothing here yet.</div>'; return; }
+  const total = paymentLog.reduce((s, r) => s + Number(r.amount), 0);
+  summary.textContent = paymentLog.length + ' records · Total: ₦' + total.toLocaleString();
+  list.innerHTML = paymentLog.slice().reverse().map(r => `
+    <div class="record-item">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="record-name">${r.pupil}</div>
+        <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:${r.mode==='Lesson fees'?'#E6F1FB':'#E1F5EE'};color:${r.mode==='Lesson fees'?'#185FA5':'#0F6E56'};font-weight:600;">${r.mode}</span>
+      </div>
+      <div class="record-meta">${r.cls} · ${r.category} · Invoice #${r.invoice}</div>
+      <div class="record-amount">₦${Number(r.amount).toLocaleString()}</div>
+    </div>`).join('');
+}
+function exportCSV(){
+  if(paymentLog.length === 0){ alert('No records to export.'); return; }
+  const rows = paymentLog.map(r => [r.mode, r.pupil, r.cls, r.category, r.session, r.feeType, r.amount, r.invoice, r.date].join(','));
+  const csv = ['Type,Pupil,Class,Category,Session,Fee Type,Amount,Invoice,Date', ...rows].join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'IGS_Records.csv'; a.click();
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function fmtN(n){ return '₦' + Number(n).toLocaleString(); }
+function initials(n){ return n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase(); }
+
+// Background sync loop
+setInterval(processQueue, 20000);
+updateUI();
+</script>
+</body>
+</html>
